@@ -20,7 +20,7 @@ const storage = new GridFsStorage({
 
     return new Promise((resolve, reject) => {
       const fileInfo = {
-        filename: file.originalname,
+        filename: file.originalname.replaceAll(" ", "-"),
         bucketName: 'GFSbucket' // a collection name
       };
       resolve(fileInfo);
@@ -45,7 +45,7 @@ router.get("/download/:filename", async (req, res, next) => {
 
 
   try {
-    const files = [...await gfs.find({ filename: req.params.filename }).toArray()]
+    const files = [...await gfs.find({ filename: req.params.filename.replaceAll(" ", "-") }).toArray()]
     console.log(files);
 
 
@@ -57,11 +57,9 @@ router.get("/download/:filename", async (req, res, next) => {
 
     const readstream = gfs.openDownloadStreamByName(files[0].filename);
     readstream.pipe(res);
-    // files?.map(file => {
-    //   var readstream = gfs.openDownloadStream(file._id)
-    //   res.set('Content-Type', file.mimetype);
-    //   return readstream.pipe(res);
-    // })
+    res.json({
+      message: files[0]
+    })
   } catch (error) {
     console.error(error.message);
   }
