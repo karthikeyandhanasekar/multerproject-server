@@ -31,8 +31,24 @@ const storage = new GridFsStorage({
 const upload = multer({ storage: storage })
 
 /* GET home page. */
-router.get('/', function (req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', async (req, res, next) => {
+  try {
+    const files = await gfs.find().toArray()
+    files.map(ele => {
+
+      res.set({
+        "Accept-Ranges": "bytes",
+        "Content-Disposition": `attachment; filename=${ele.filename}`,
+        "Content-Type": `${ele.contentType}`
+      });
+
+      const readstream = gfs.openDownloadStreamByName(ele.filename);
+      readstream.pipe(res);
+    })
+
+  } catch (error) {
+    console.log(error.message);
+  }
 });
 
 
