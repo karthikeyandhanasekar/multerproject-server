@@ -41,27 +41,14 @@ router.get("/", async (req, res, next) => {
     console.error(error.message);
   }
 })
-router.get('/:filename', async (req, res, next) => {
-  try {
-    const files = await gfs.find({ filename: req.params.filename }).toArray()
-    console.log(files[0]);
-    res.set({
-      "Accept-Ranges": "bytes",
-      "Content-Disposition": `attachment; filename=${files[0].filename}`,
-      "Content-Type": `${files[0].contentType}`
-    });
-
-    const readstream = gfs.openDownloadStreamByName(files[0].filename);
-    readstream.pipe(res)
-  }
-  catch (error) {
-    console.log(error.message);
-  }
-});
-
 
 router.post("/upload", upload.single('file'), async (req, res, next) => {
 
+  console.log(req.file);
+
+  req.file && res.json({
+    status: true
+  })
 
   // console.log(req.file);
 })
@@ -70,7 +57,12 @@ router.post("/upload", upload.single('file'), async (req, res, next) => {
 router.post("/multipleupload", upload.array("file", 10), async (req, res, next) => {
 
 
-  // console.log(req.file);
+  console.log(req.files);
+
+  req.files && res.json({
+    status: true
+  })
+
 })
 
 
@@ -86,10 +78,20 @@ router.get("/download/:filename", async (req, res, next) => {
     });
 
     const readstream = gfs.openDownloadStreamByName(files[0].filename);
-    readstream.pipe(res);
-    res.json({
-      filename: files[0].filename
-    })
+
+    readstream.on('data', (chunk) => {
+      res.write(chunk);
+
+    });
+
+    readstream.on('error', () => {
+      res.sendStatus(404);
+    });
+
+    readstream.on('end', () => {
+      res.end();
+
+    });
   } catch (error) {
     console.error(error.message);
   }
