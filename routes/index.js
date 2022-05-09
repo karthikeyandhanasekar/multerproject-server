@@ -5,6 +5,7 @@ require("dotenv").config()
 const { GridFsStorage } = require('multer-gridfs-storage');
 const { mongo, connection, } = require('mongoose');
 const multer = require('multer');
+const e = require('express');
 
 let gfs
 
@@ -31,22 +32,29 @@ const storage = new GridFsStorage({
 const upload = multer({ storage: storage })
 
 /* GET home page. */
-router.get('/', async (req, res, next) => {
+router.get("/", async (req, res, next) => {
   try {
     const files = await gfs.find().toArray()
-    files.map(ele => {
-
-      res.set({
-        "Accept-Ranges": "bytes",
-        "Content-Disposition": `attachment; filename=${ele.filename}`,
-        "Content-Type": `${ele.contentType}`
-      });
-
-      const readstream = gfs.openDownloadStreamByName(ele.filename);
-      readstream.pipe(res);
-    })
+    res.send([...new Set(files.map(ele => ele.filename))])
 
   } catch (error) {
+    console.error(error.message);
+  }
+})
+router.get('/:filename', async (req, res, next) => {
+  try {
+    const files = await gfs.find({ filename: req.params.filename }).toArray()
+    console.log(files[0]);
+    res.set({
+      "Accept-Ranges": "bytes",
+      "Content-Disposition": `attachment; filename=${files[0].filename}`,
+      "Content-Type": `${files[0].contentType}`
+    });
+
+    const readstream = gfs.openDownloadStreamByName(files[0].filename);
+    readstream.pipe(res)
+  }
+  catch (error) {
     console.log(error.message);
   }
 });
@@ -62,9 +70,6 @@ router.get("/download/:filename", async (req, res, next) => {
 
   try {
     const files = [...await gfs.find({ filename: req.params.filename.replaceAll(" ", "-") }).toArray()]
-    console.log(files);
-
-
     res.set({
       "Accept-Ranges": "bytes",
       "Content-Disposition": `attachment; filename=${files[0].filename}`,
@@ -74,7 +79,7 @@ router.get("/download/:filename", async (req, res, next) => {
     const readstream = gfs.openDownloadStreamByName(files[0].filename);
     readstream.pipe(res);
     res.json({
-      message: files[0]
+      filename: files[0].filename
     })
   } catch (error) {
     console.error(error.message);
