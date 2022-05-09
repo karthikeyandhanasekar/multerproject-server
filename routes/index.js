@@ -29,12 +29,15 @@ const storage = new GridFsStorage({
   }
 });
 
+//implement gfs bucket storage in multer system
 const upload = multer({ storage: storage })
 
-/* GET home page. */
 router.get("/", async (req, res, next) => {
   try {
+
+
     const files = await gfs.find().toArray()
+    // send filenames to client
     res.send([...new Set(files.map(ele => ele.filename))])
 
   } catch (error) {
@@ -42,23 +45,26 @@ router.get("/", async (req, res, next) => {
   }
 })
 
+// route to upload single files
 router.post("/upload", upload.single('file'), async (req, res, next) => {
 
   console.log(req.file);
 
+  //send status if process is success
   req.file && res.json({
     status: true
   })
 
-  // console.log(req.file);
 })
 
 
+//route for multiple file upload
 router.post("/multipleupload", upload.array("file", 10), async (req, res, next) => {
 
 
   console.log(req.files);
 
+  //send status if process is success
   req.files && res.json({
     status: true
   })
@@ -66,6 +72,7 @@ router.post("/multipleupload", upload.array("file", 10), async (req, res, next) 
 })
 
 
+// route to get specific file content
 router.get("/download/:filename", async (req, res, next) => {
 
 
