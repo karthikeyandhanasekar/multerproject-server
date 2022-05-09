@@ -18,7 +18,7 @@ connection.once("open", () => {
 const storage = new GridFsStorage({
   url: process.env.MONGODB_URL,
   file: (req, file) => {
-
+    console.log(file);
     return new Promise((resolve, reject) => {
       const fileInfo = {
         filename: file.originalname.replaceAll(" ", "-"),
@@ -62,8 +62,17 @@ router.get('/:filename', async (req, res, next) => {
 
 router.post("/upload", upload.single('file'), async (req, res, next) => {
 
+
   // console.log(req.file);
 })
+
+
+router.post("/multipleupload", upload.array("file", 10), async (req, res, next) => {
+
+
+  // console.log(req.file);
+})
+
 
 router.get("/download/:filename", async (req, res, next) => {
 
