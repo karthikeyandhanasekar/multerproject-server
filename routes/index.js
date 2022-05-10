@@ -83,7 +83,6 @@ router.get("/download/:filename", async (req, res, next) => {
       "Content-Disposition": `attachment; filename=${files[0].filename}`,
       "Content-Type": `${files[0].contentType}`
     });
-
     const readstream = gfs.openDownloadStreamByName(files[0].filename);
 
     readstream.on('data', (chunk) => {
@@ -96,12 +95,56 @@ router.get("/download/:filename", async (req, res, next) => {
     });
 
     readstream.on('end', () => {
+
       res.end();
+      next()
 
     });
   } catch (error) {
     console.error(error.message);
   }
+
+})
+
+
+
+//route to delete the file
+router.delete("/delete/:filename", async (req, res, next) => {
+
+  try {
+    const files = [...await gfs.find({ filename: req.params.filename.replaceAll(" ", "-") }).toArray()]
+
+    console.log(files[0]);
+    gfs.delete(files[0]._id).then(() => {
+      res.json({
+        status: true
+      })
+    })
+  } catch (error) {
+    console.error(error.message);
+  }
+
+})
+
+
+router.put("/rename/:oldname/:newname", async (req, res, next) => {
+
+  try {
+    const files = [...await gfs.find({ filename: req.params.oldname.replaceAll(" ", "-") }).toArray()]
+
+    const extension = req.params.oldname.split(".").pop()
+    const updatedname = req.params.newname + "." + extension
+    gfs.rename(files[0]._id, updatedname).then(() => {
+      res.json({
+        status: true
+      })
+    })
+
+  } catch (error) {
+    console.error(error.message);
+  }
+
+
 
 })
 
