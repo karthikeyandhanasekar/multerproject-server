@@ -97,7 +97,7 @@ router.get("/download/:filename", async (req, res, next) => {
     readstream.on('end', () => {
 
       res.end();
-      next()
+  
 
     });
   } catch (error) {
